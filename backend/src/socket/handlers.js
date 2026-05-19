@@ -88,7 +88,7 @@ const initSocketHandlers = (io) => {
     });
   });
 
-  Im('[Socket.io] Handlers initialized');
+  console.log('[Socket.io] Handlers initialized');
 };
 
 module.exports = { initSocketHandlers };
