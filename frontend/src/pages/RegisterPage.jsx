@@ -61,12 +61,12 @@ export default function RegisterPage() {
             <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center shadow-glow-lg group-hover:scale-110 transition-transform">
               <Printer className="w-6 h-6 text-white" />
             </div>
-            <span className="font-display font-bold text-2xl text-white">
+            <span className="font-display font-bold text-2xl text-gray-900 dark:text-white">
               Cloud<span className="gradient-text">Print</span>
             </span>
           </Link>
-          <h1 className="text-2xl font-bold text-white mt-6 mb-1">Create your account</h1>
-          <p className="text-gray-400 text-sm">Start printing from anywhere in minutes</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mt-6 mb-1">Create your account</h1>
+          <p className="text-gray-500 text-sm">Start printing from anywhere in minutes</p>
         </div>
 
         <div className="glass-card p-8">

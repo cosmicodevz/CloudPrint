@@ -6,7 +6,8 @@ import {
   Upload, Clock, Wifi, Settings, LayoutDashboard,
   Printer, CheckCircle, XCircle, Loader, Bell, RefreshCw
 } from 'lucide-react';
-import Sidebar      from '../components/Sidebar';
+import Sidebar         from '../components/Sidebar';
+import PrinterManager  from '../components/PrinterManager';
 import FileUploader from '../components/FileUploader';
 import PrintQueue   from '../components/PrintQueue';
 import { useAuth }  from '../context/AuthContext';
@@ -203,14 +204,33 @@ export default function DashboardPage() {
           <StatCard icon={XCircle}     label="Failed"          value={stats.failed}    color="from-red-600 to-rose-400" />
         </div>
 
-        {/* Printers */}
+        {/* Printers summary */}
         <div>
-          <h3 className="font-semibold text-white mb-3">Your Printers</h3>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-semibold text-white">Printers</h3>
+            <button onClick={() => setSection('printers')}
+                    className="text-xs text-primary-400 hover:text-primary-300 transition-colors">
+              Manage →
+            </button>
+          </div>
           {printers.length === 0 ? (
-            <div className="glass-card p-8 text-center text-gray-500">No printers configured yet</div>
+            <div className="glass-card p-5 flex items-center justify-between">
+              <p className="text-gray-500 text-sm">No printers configured yet</p>
+              <button onClick={() => setSection('printers')} className="btn-primary btn-sm text-xs">
+                + Add Printer
+              </button>
+            </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {printers.map(p => <PrinterCard key={p._id} printer={p} onStatusChange={handlePrinterStatus} />)}
+              {printers.slice(0, 4).map(p => (
+                <PrinterCard key={p._id} printer={p} onStatusChange={handlePrinterStatus} />
+              ))}
+              {printers.length > 4 && (
+                <button onClick={() => setSection('printers')}
+                        className="glass-card p-4 text-center text-sm text-primary-400 hover:text-primary-300 transition-colors">
+                  +{printers.length - 4} more printers →
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -249,17 +269,7 @@ export default function DashboardPage() {
       </div>
     ),
 
-    printers: (
-      <div>
-        <h2 className="text-xl font-bold text-white mb-6">Available Printers</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {printers.map(p => <PrinterCard key={p._id} printer={p} onStatusChange={handlePrinterStatus} />)}
-        </div>
-        {printers.length === 0 && (
-          <div className="glass-card p-12 text-center text-gray-500">No printers found. Contact your admin.</div>
-        )}
-      </div>
-    ),
+    printers: <PrinterManager />,
 
     profile: <ProfileSection />,
   };
@@ -284,12 +294,14 @@ export default function DashboardPage() {
       <main className="flex-1 overflow-y-auto">
         {/* Mobile header */}
         <div className="lg:hidden flex items-center justify-between p-4 glass border-b border-white/5">
-          <button onClick={() => setMobileNav(true)} className="btn-icon p-2">
-            <span className="block w-5 h-0.5 bg-white mb-1.5" />
-            <span className="block w-5 h-0.5 bg-white mb-1.5" />
-            <span className="block w-5 h-0.5 bg-white" />
+          <button onClick={() => setMobileNav(true)} className="btn-icon p-2" aria-label="Open menu">
+            <span className="flex flex-col gap-1.5">
+              <span className="mobile-menu-bar block w-5 h-0.5 bg-gray-700 dark:bg-white rounded-full" />
+              <span className="mobile-menu-bar block w-5 h-0.5 bg-gray-700 dark:bg-white rounded-full" />
+              <span className="mobile-menu-bar block w-5 h-0.5 bg-gray-700 dark:bg-white rounded-full" />
+            </span>
           </button>
-          <span className="font-display font-bold text-white">Cloud<span className="gradient-text">Print</span></span>
+          <span className="font-display font-bold text-gray-900 dark:text-white">Cloud<span className="gradient-text">Print</span></span>
           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center text-white text-xs font-bold">
             {user?.name?.slice(0, 2).toUpperCase()}
           </div>

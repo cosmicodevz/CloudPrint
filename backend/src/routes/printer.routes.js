@@ -15,33 +15,44 @@ router.use(protect);
 // ── GET /api/printers ────────────────────────────────────────────────
 router.get('/', async (req, res, next) => {
   try {
-    const printers = await Printer.find().sort({ createdAt: -1 });
+    const printers = await Printer.find()
+      .sort({ createdAt: -1 })
+      .populate('createdBy', 'name email');
     res.json({ success: true, printers });
   } catch (err) { next(err); }
 });
 
-// ── POST /api/printers — Admin only ─────────────────────────────────
-router.post('/', authorize('admin'), async (req, res, next) => {
+// ── POST /api/printers — Any authenticated user ──────────────────────
+// Admins get status 'offline'; regular users also get 'offline'
+// (Agent sets status to 'online' via heartbeat)
+router.post('/', async (req, res, next) => {
   try {
     const { name, location, ipAddress, model, capabilities } = req.body;
     if (!name) throw new AppError('Printer name required', 400);
 
-    const printer = await Printer.create({ name, location, ipAddress, model, capabilities });
-    await ActivityLog.create({ userId: req.user._id, action: 'PRINTER_CREATED',
-      details: { printerId: printer._id, name }, ip: req.ip });
+    const printer = await Printer.create({
+      name, location, ipAddress, model, capabilities,
+      createdBy: req.user._id,
+    });
+
+    await ActivityLog.create({
+      userId:  req.user._id,
+      action:  'PRINTER_CREATED',
+      details: { printerId: printer._id, name },
+      ip:      req.ip,
+    });
 
     req.app.get('io').emit('printer:created', printer);
-    res.status(201).json({ success: true, message: 'Printer created', printer });
+    res.status(201).json({ success: true, message: 'Printer added', printer });
   } catch (err) { next(err); }
 });
 
 // ── GET /api/printers/:id ─────────────────────────────────────────────
 router.get('/:id', async (req, res, next) => {
   try {
-    const printer = await Printer.findById(req.params.id);
+    const printer = await Printer.findById(req.params.id).populate('createdBy', 'name email');
     if (!printer) throw new AppError('Printer not found', 404);
 
-    // Recent jobs for this printer
     const recentJobs = await PrintJob.find({ printerId: printer._id })
       .sort({ createdAt: -1 }).limit(10).populate('userId', 'name');
 
@@ -49,21 +60,47 @@ router.get('/:id', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// ── PATCH /api/printers/:id — Admin only ─────────────────────────────
-router.patch('/:id', authorize('admin'), async (req, res, next) => {
+// ── PATCH /api/printers/:id — Owner or Admin ─────────────────────────
+router.patch('/:id', async (req, res, next) => {
   try {
-    const printer = await Printer.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+    const printer = await Printer.findById(req.params.id);
     if (!printer) throw new AppError('Printer not found', 404);
-    req.app.get('io').emit('printer:updated', printer);
-    res.json({ success: true, message: 'Printer updated', printer });
+
+    const isOwner = printer.createdBy?.toString() === req.user._id.toString();
+    const isAdmin = req.user.role === 'admin';
+
+    if (!isOwner && !isAdmin) {
+      throw new AppError('Not authorised to edit this printer', 403);
+    }
+
+    // Non-admins cannot change status manually (agent sets it)
+    const allowed = isAdmin
+      ? req.body
+      : (({ name, location, ipAddress, model, capabilities }) =>
+          ({ name, location, ipAddress, model, capabilities }))(req.body);
+
+    const updated = await Printer.findByIdAndUpdate(
+      req.params.id, allowed, { new: true, runValidators: true }
+    );
+    req.app.get('io').emit('printer:updated', updated);
+    res.json({ success: true, message: 'Printer updated', printer: updated });
   } catch (err) { next(err); }
 });
 
-// ── DELETE /api/printers/:id — Admin only ────────────────────────────
-router.delete('/:id', authorize('admin'), async (req, res, next) => {
+// ── DELETE /api/printers/:id — Owner or Admin ────────────────────────
+router.delete('/:id', async (req, res, next) => {
   try {
-    const printer = await Printer.findByIdAndDelete(req.params.id);
+    const printer = await Printer.findById(req.params.id);
     if (!printer) throw new AppError('Printer not found', 404);
+
+    const isOwner = printer.createdBy?.toString() === req.user._id.toString();
+    const isAdmin = req.user.role === 'admin';
+
+    if (!isOwner && !isAdmin) {
+      throw new AppError('Not authorised to delete this printer', 403);
+    }
+
+    await Printer.findByIdAndDelete(req.params.id);
     req.app.get('io').emit('printer:deleted', { printerId: req.params.id });
     res.json({ success: true, message: 'Printer deleted' });
   } catch (err) { next(err); }

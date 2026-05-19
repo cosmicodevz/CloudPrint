@@ -43,6 +43,12 @@ const printerSchema = new mongoose.Schema({
     paperSizes:  { type: [String], default: ['A4', 'Letter', 'Legal'] },
     maxDPI:      { type: Number, default: 600 },
   },
+  // Who registered this printer (null = admin-created)
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null,
+  },
   totalJobsProcessed: { type: Number, default: 0 },
   lastSeen:           Date,
 }, {

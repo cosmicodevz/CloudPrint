@@ -30,7 +30,7 @@ function Navbar() {
           <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center shadow-glow group-hover:shadow-glow-lg transition-all duration-300">
             <Printer className="w-5 h-5 text-white" />
           </div>
-          <span className="font-display font-bold text-xl text-white">
+          <span className="font-display font-bold text-xl text-gray-900 dark:text-white">
             Cloud<span className="gradient-text">Print</span>
           </span>
         </Link>
@@ -39,7 +39,7 @@ function Navbar() {
         <div className="hidden md:flex items-center gap-8">
           {['Features', 'How It Works', 'Pricing', 'Testimonials'].map(item => (
             <a key={item} href={`#${item.toLowerCase().replace(/ /g, '-')}`}
-               className="text-sm text-gray-400 hover:text-white transition-colors">
+               className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
               {item}
             </a>
           ))}
@@ -55,8 +55,18 @@ function Navbar() {
 
         {/* Mobile menu toggle */}
         <button onClick={() => setMenuOpen(!menuOpen)}
-                className="md:hidden btn-icon p-2">
-          {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                className="md:hidden p-2 rounded-lg transition-all duration-200 hover:bg-white/10 text-gray-700 dark:text-gray-400"
+                aria-label="Toggle menu">
+          {menuOpen
+            ? <X className="w-5 h-5" />
+            : (
+              <span className="flex flex-col gap-1.5">
+                <span className="mobile-menu-bar block w-5 h-0.5 bg-gray-700 dark:bg-white rounded-full" />
+                <span className="mobile-menu-bar block w-5 h-0.5 bg-gray-700 dark:bg-white rounded-full" />
+                <span className="mobile-menu-bar block w-5 h-0.5 bg-gray-700 dark:bg-white rounded-full" />
+              </span>
+            )
+          }
         </button>
       </div>
 
@@ -102,7 +112,7 @@ function Hero() {
           </div>
 
           {/* Headline */}
-          <h1 className="font-display font-bold text-5xl sm:text-6xl md:text-7xl text-white leading-tight mb-6 animate-fade-in-up delay-100">
+          <h1 className="hero-heading font-display font-bold text-5xl sm:text-6xl md:text-7xl text-white leading-tight mb-6 animate-fade-in-up delay-100">
             Cloud Printing{' '}
             <span className="gradient-text">Reimagined</span>
             <br />for the Modern Era

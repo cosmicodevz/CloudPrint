@@ -15,11 +15,6 @@
     background: #0f0f1a;
   }
 
-  /* Light mode overrides */
-  .light body, body.light {
-    @apply bg-gray-50 text-gray-900;
-  }
-
   ::-webkit-scrollbar { width: 6px; height: 6px; }
   ::-webkit-scrollbar-track { background: #1a1a2e; }
   ::-webkit-scrollbar-thumb { background: #4f46e5; border-radius: 3px; }
@@ -250,67 +245,368 @@
   box-shadow: 0 0 10px rgba(99,102,241,0.5);
 }
 
-/* Light mode */
+/* =====================================================================
+   LIGHT MODE OVERRIDES
+   ===================================================================== */
 html.light {
-  --bg: #f8fafc;
-  --surface: #ffffff;
-  --border: rgba(0,0,0,0.08);
-  --text: #0f172a;
+  --bg:         #f1f5f9;
+  --bg-alt:     #f8fafc;
+  --surface:    #ffffff;
+  --surface-2:  #f1f5f9;
+  --border:     rgba(0,0,0,0.09);
+  --text:       #0f172a;
   --text-muted: #64748b;
+  --text-subtle:#94a3b8;
 }
+
+/* ── Body & Base ── */
 html.light body {
   background: var(--bg) !important;
   color: var(--text) !important;
 }
+
+/* ── Hero / Auth page backgrounds ── */
+html.light .bg-hero-gradient {
+  background: linear-gradient(135deg, #eef2ff 0%, #f0f9ff 50%, #faf5ff 100%) !important;
+}
+
+/* ── Surface colors ── */
 html.light .bg-surface-900,
 html.light .bg-surface-800,
 html.light .bg-surface-700 {
   background-color: var(--bg) !important;
 }
-/* Ensure we don't mess up text in buttons/gradients */
-html.light .text-white:not([class*="bg-gradient-"]):not(.btn-primary):not(.btn-secondary):not(.btn-danger) {
+html.light .bg-surface-800 { background-color: var(--bg-alt) !important; }
+
+/* ── Text colors ── */
+html.light .text-white {
   color: var(--text) !important;
 }
+/* Preserve white text inside gradient buttons & badges */
+html.light .btn-primary,
+html.light .btn-primary *,
+html.light .btn-danger,
+html.light .btn-danger *,
+html.light [class*="badge-"] { 
+  color: inherit !important; 
+}
+html.light .btn-primary { color: #fff !important; }
+html.light .btn-danger  { color: #fff !important; }
+
+html.light .text-gray-100 { color: #1e293b !important; }
+html.light .text-gray-200 { color: #334155 !important; }
 html.light .text-gray-300 { color: #475569 !important; }
 html.light .text-gray-400 { color: #64748b !important; }
 html.light .text-gray-500 { color: #94a3b8 !important; }
-html.light .text-gray-600 { color: #475569 !important; }
+html.light .text-gray-600 { color: #64748b !important; }
+
+/* ── Borders ── */
 html.light .border-white\/5,
 html.light .border-white\/10,
-html.light .border-white\/20,
+html.light .border-white\/20 {
+  border-color: var(--border) !important;
+}
 html.light .divide-white\/5 > :not([hidden]) ~ :not([hidden]) {
   border-color: var(--border) !important;
 }
+
+/* ── Scrollbar ── */
+html.light ::-webkit-scrollbar-track { background: #e2e8f0; }
+html.light ::-webkit-scrollbar-thumb { background: #6366f1; }
+
+/* ── Glass cards ── */
 html.light .glass,
 html.light .glass-dark,
 html.light .glass-card,
 html.light .glass-card-hover {
   background: var(--surface) !important;
   border-color: var(--border) !important;
-  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03) !important;
+  backdrop-filter: none !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.07), 0 4px 16px rgba(0,0,0,0.05) !important;
 }
 html.light .glass-card-hover:hover {
-  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -2px rgba(0,0,0,0.04) !important;
+  box-shadow: 0 8px 24px rgba(99,102,241,0.12), 0 2px 8px rgba(0,0,0,0.06) !important;
   border-color: rgba(99,102,241,0.3) !important;
-  background: #f8fafc !important;
+  background: var(--surface) !important;
 }
+
+/* ── Inputs ── */
 html.light .input {
-  background: #ffffff !important;
-  border-color: rgba(0,0,0,0.15) !important;
+  background: var(--surface) !important;
+  border-color: rgba(0,0,0,0.13) !important;
+  color: var(--text) !important;
+  backdrop-filter: none !important;
+}
+html.light .input::placeholder { color: #94a3b8 !important; }
+html.light .input:focus {
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.12) !important;
+}
+html.light .input-label { color: #475569 !important; }
+
+/* ── Select dropdowns ── */
+html.light select.input {
+  background: var(--surface) !important;
   color: var(--text) !important;
 }
-html.light .input::placeholder {
+
+/* ── Navbar ── */
+html.light nav.fixed {
+  background: rgba(248,250,252,0.9) !important;
+  border-color: rgba(0,0,0,0.08) !important;
+  box-shadow: 0 1px 8px rgba(0,0,0,0.06) !important;
+}
+/* Desktop nav links */
+html.light nav .text-gray-400 { color: #64748b !important; }
+html.light nav .text-gray-400:hover { color: #0f172a !important; }
+
+/* Hamburger menu button - make lines dark in light mode */
+html.light .mobile-menu-bar { background-color: #334155 !important; }
+
+/* ── Mobile menu dropdown (landing) ── */
+html.light nav .glass.border-t {
+  background: rgba(255,255,255,0.97) !important;
+  border-color: rgba(0,0,0,0.08) !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.1) !important;
+}
+html.light nav .text-gray-300 { color: #475569 !important; }
+html.light nav .border-white\/10 { border-color: rgba(0,0,0,0.08) !important; }
+
+/* btn-secondary in light mode */
+html.light .btn-secondary {
+  border-color: rgba(0,0,0,0.15) !important;
+  color: #0f172a !important;
+}
+html.light .btn-secondary:hover {
+  background: rgba(0,0,0,0.05) !important;
+  border-color: #6366f1 !important;
+}
+html.light .btn-ghost {
+  color: #64748b !important;
+}
+html.light .btn-ghost:hover {
+  color: #0f172a !important;
+  background: rgba(0,0,0,0.05) !important;
+}
+
+/* ── Glow orbs — softer in light mode ── */
+html.light .glow-orb { opacity: 0.06 !important; }
+
+/* ── Hero section text ── */
+html.light section h1.text-white,
+html.light .hero-heading { color: #0f172a !important; }
+html.light section p.text-gray-400 { color: #64748b !important; }
+
+/* Hero floating card */
+html.light .animate-float .glass-card .text-white { color: #0f172a !important; }
+html.light .animate-float .glass-card .text-gray-500 { color: #94a3b8 !important; }
+html.light .animate-float .glass-card .bg-white\/5 {
+  background: rgba(0,0,0,0.03) !important;
+}
+html.light .animate-float .glass-card .border-white\/5 {
+  border-color: rgba(0,0,0,0.07) !important;
+}
+html.light .animate-float .glass-card .bg-blue-500\/10 {
+  background: rgba(59,130,246,0.08) !important;
+}
+html.light .animate-float .glass-card .border-blue-500\/20 {
+  border-color: rgba(59,130,246,0.15) !important;
+}
+
+/* ── Features / HowItWorks / Pricing sections ── */
+html.light .glass-card-hover h3.text-white,
+html.light .glass-card h3.text-white {
+  color: #0f172a !important;
+}
+html.light .glass-card-hover p.text-gray-400,
+html.light .glass-card p.text-gray-400 {
+  color: #64748b !important;
+}
+html.light .glass-card p.text-gray-500,
+html.light .glass-card-hover p.text-gray-500 {
   color: #94a3b8 !important;
 }
-html.light .nav-item { color: #64748b !important; }
-html.light .nav-item:hover { color: var(--text) !important; background: rgba(0,0,0,0.05) !important; }
-html.light .nav-item-active { 
-  background: #eef2ff !important; 
-  color: #4f46e5 !important; 
-  border-color: #c7d2fe !important; 
+html.light .glass-card li.text-gray-300 { color: #475569 !important; }
+html.light .glass-card p.text-gray-300  { color: #475569 !important; }
+
+/* Grid pattern on hero */
+html.light .absolute.inset-0.opacity-5 { opacity: 0.03 !important; }
+
+/* ── Auth pages (Login / Register) ── */
+html.light .min-h-screen.bg-hero-gradient .text-white {
+  color: #0f172a !important;
 }
-html.light .hover\:bg-white\/10:hover { background-color: rgba(0,0,0,0.05) !important; }
-html.light .hover\:bg-white\/3:hover { background-color: rgba(0,0,0,0.02) !important; }
-html.light .hover\:text-white:hover:not([class*="bg-gradient-"]) { color: var(--text) !important; }
+html.light .min-h-screen.bg-hero-gradient p.text-gray-400 {
+  color: #64748b !important;
+}
+html.light .min-h-screen.bg-hero-gradient .glass-card {
+  background: #ffffff !important;
+  border: 1px solid rgba(0,0,0,0.09) !important;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.08) !important;
+}
+html.light .min-h-screen.bg-hero-gradient p.text-gray-500 {
+  color: #94a3b8 !important;
+}
+html.light .min-h-screen.bg-hero-gradient p.text-gray-600 {
+  color: #64748b !important;
+}
+/* Logo text on auth pages */
+html.light .min-h-screen.bg-hero-gradient span.text-white {
+  color: #0f172a !important;
+}
+
+/* ── Dashboard / Sidebar ── */
+html.light .glass.border-r {
+  background: #ffffff !important;
+  border-color: rgba(0,0,0,0.08) !important;
+  box-shadow: 1px 0 8px rgba(0,0,0,0.05) !important;
+}
+html.light .nav-item { color: #64748b !important; }
+html.light .nav-item:hover { 
+  color: #0f172a !important;
+  background: rgba(99,102,241,0.07) !important;
+}
+html.light .nav-item-active {
+  background: #eef2ff !important;
+  color: #4f46e5 !important;
+  border-color: #c7d2fe !important;
+}
+
+/* Sidebar status pill */
 html.light .bg-white\/5 { background-color: rgba(0,0,0,0.03) !important; }
 html.light .bg-white\/10 { background-color: rgba(0,0,0,0.05) !important; }
+
+/* Sidebar collapse toggle button */
+html.light .bg-surface-700 {
+  background-color: #ffffff !important;
+  border-color: rgba(0,0,0,0.1) !important;
+}
+html.light .text-gray-400 { color: #64748b !important; }
+
+/* Dashboard mobile header */
+html.light .lg\\:hidden.glass.border-b {
+  background: rgba(255,255,255,0.95) !important;
+  border-color: rgba(0,0,0,0.08) !important;
+}
+/* Mobile hamburger lines inside dashboard header */
+html.light main .block.bg-white { background-color: #334155 !important; }
+
+/* ── Dashboard stat cards ── */
+html.light .glass-card-hover .text-white.font-display { color: #0f172a !important; }
+html.light .glass-card-hover .text-gray-400 { color: #64748b !important; }
+html.light .glass-card-hover .text-gray-600 { color: #94a3b8 !important; }
+
+/* ── Badges in light mode ── */
+html.light .badge-pending   { background: #fef3c7 !important; color: #92400e !important; border-color: #fcd34d !important; }
+html.light .badge-printing  { background: #dbeafe !important; color: #1e40af !important; border-color: #93c5fd !important; }
+html.light .badge-completed { background: #dcfce7 !important; color: #166534 !important; border-color: #86efac !important; }
+html.light .badge-failed    { background: #fee2e2 !important; color: #991b1b !important; border-color: #fca5a5 !important; }
+html.light .badge-cancelled { background: #f1f5f9 !important; color: #64748b !important; border-color: #cbd5e1 !important; }
+html.light .badge-online    { background: #dcfce7 !important; color: #166534 !important; border-color: #86efac !important; }
+html.light .badge-offline   { background: #f1f5f9 !important; color: #64748b !important; border-color: #cbd5e1 !important; }
+
+/* ── Print queue table ── */
+html.light .glass-card table thead tr {
+  border-color: rgba(0,0,0,0.08) !important;
+}
+html.light .glass-card table tbody tr {
+  border-color: rgba(0,0,0,0.05) !important;
+}
+html.light .glass-card table tbody tr:hover {
+  background: rgba(99,102,241,0.04) !important;
+}
+html.light .glass-card .border-t.border-white\/5 {
+  border-color: rgba(0,0,0,0.07) !important;
+}
+
+/* ── Notifications ── */
+html.light .bg-primary-500\/10 { background: rgba(99,102,241,0.07) !important; }
+html.light .border-primary-500\/20 { border-color: rgba(99,102,241,0.2) !important; }
+html.light .text-primary-200 { color: #4f46e5 !important; }
+
+/* ── Footer ── */
+html.light footer { border-color: rgba(0,0,0,0.08) !important; }
+html.light footer .text-gray-500 { color: #94a3b8 !important; }
+html.light footer .text-gray-600 { color: #94a3b8 !important; }
+html.light footer h4.text-white  { color: #0f172a !important; }
+html.light footer a.text-gray-500:hover { color: #475569 !important; }
+html.light footer .border-white\/5 { border-color: rgba(0,0,0,0.08) !important; }
+
+/* ── Misc utility overrides ── */
+html.light .hover\:bg-white\/10:hover { background-color: rgba(0,0,0,0.05) !important; }
+html.light .hover\:bg-white\/3:hover  { background-color: rgba(0,0,0,0.02) !important; }
+html.light .hover\:text-white:hover { color: var(--text) !important; }
+html.light .btn-icon { color: #64748b !important; }
+html.light .btn-icon:hover { color: #0f172a !important; background: rgba(0,0,0,0.06) !important; }
+
+/* Skeleton in light mode */
+html.light .skeleton {
+  background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%) !important;
+}
+
+/* Modal overlay */
+html.light .fixed.inset-0.bg-black\/50 { background: rgba(15,23,42,0.4) !important; }
+html.light .fixed.inset-0.bg-black\/60 { background: rgba(15,23,42,0.5) !important; }
+
+/* Printer request card */
+html.light .border-primary-500\/30 { border-color: rgba(99,102,241,0.25) !important; }
+html.light .bg-primary-600\/30     { background: rgba(99,102,241,0.08) !important; }
+html.light .bg-primary-500\/20     { background: rgba(99,102,241,0.1) !important; }
+html.light .text-primary-400       { color: #4f46e5 !important; }
+html.light .text-primary-300       { color: #4338ca !important; }
+html.light .text-accent-400        { color: #a21caf !important; }
+
+/* Yellow warning box */
+html.light .border-yellow-500\/20 { border-color: rgba(234,179,8,0.2) !important; }
+html.light .bg-yellow-500\/5      { background: rgba(254,252,232,0.8) !important; }
+html.light .text-yellow-400       { color: #a16207 !important; }
+
+/* ── PrinterManager light mode ── */
+/* Printer capability tags */
+html.light [class*="bg-blue-500/15"]   { background: rgba(59,130,246,0.1) !important; }
+html.light [class*="bg-purple-500/15"] { background: rgba(168,85,247,0.1) !important; }
+html.light .text-blue-300   { color: #1d4ed8 !important; }
+html.light .text-purple-300 { color: #7e22ce !important; }
+html.light [class*="border-blue-500/20"]   { border-color: rgba(59,130,246,0.2) !important; }
+html.light [class*="border-purple-500/20"] { border-color: rgba(168,85,247,0.2) !important; }
+
+/* Printer card action row */
+html.light [class*="border-red-500/20"] { border-color: rgba(239,68,68,0.2) !important; }
+html.light .text-red-400  { color: #dc2626 !important; }
+html.light .text-red-300  { color: #b91c1c !important; }
+html.light [class*="hover:bg-red-500/10"]:hover { background: rgba(239,68,68,0.08) !important; }
+html.light [class*="hover:border-red-400/40"]:hover { border-color: rgba(239,68,68,0.3) !important; }
+
+/* Emerald / green badges */
+html.light .text-emerald-400 { color: #059669 !important; }
+html.light [class*="bg-emerald-500/20"]  { background: rgba(16,185,129,0.1) !important; }
+html.light [class*="border-emerald-500/30"] { border-color: rgba(16,185,129,0.2) !important; }
+
+/* Modal backdrop */
+html.light .backdrop-blur-sm { backdrop-filter: blur(4px) !important; }
+
+/* Checkbox label bg */
+html.light label[class*="border-white/10"] {
+  background: rgba(0,0,0,0.02) !important;
+  border-color: rgba(0,0,0,0.1) !important;
+}
+html.light label[class*="border-white/10"]:hover {
+  border-color: rgba(99,102,241,0.3) !important;
+}
+
+/* Filter tab buttons */
+html.light button[class*="bg-primary-600/30"] {
+  background: rgba(99,102,241,0.1) !important;
+}
+html.light button[class*="hover:bg-white/8"]:hover {
+  background: rgba(0,0,0,0.05) !important;
+}
+
+/* Printer card border-t separator */
+html.light .border-t.border-white\/5 { border-color: rgba(0,0,0,0.06) !important; }
+
+/* Printer status colors in light mode */
+html.light .bg-gray-600\/20 { background: rgba(0,0,0,0.05) !important; }
+html.light [class*="border-gray-600/30"] { border-color: rgba(0,0,0,0.1) !important; }
+html.light .text-gray-500 { color: #94a3b8 !important; }
+

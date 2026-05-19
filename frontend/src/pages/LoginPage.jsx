@@ -55,12 +55,12 @@ export default function LoginPage() {
             <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center shadow-glow-lg group-hover:scale-110 transition-transform">
               <Printer className="w-6 h-6 text-white" />
             </div>
-            <span className="font-display font-bold text-2xl text-white">
+          <span className="font-display font-bold text-2xl text-gray-900 dark:text-white">
               Cloud<span className="gradient-text">Print</span>
             </span>
           </Link>
-          <h1 className="text-2xl font-bold text-white mt-6 mb-1">Welcome back</h1>
-          <p className="text-gray-400 text-sm">Sign in to your account to continue</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mt-6 mb-1">Welcome back</h1>
+          <p className="text-gray-500 text-sm">Sign in to your account to continue</p>
         </div>
 
         {/* Card */}
@@ -123,12 +123,6 @@ export default function LoginPage() {
               Create one free
             </Link>
           </p>
-        </div>
-
-        {/* Demo credentials */}
-        <div className="mt-4 p-4 rounded-xl border border-yellow-500/20 bg-yellow-500/5 text-center">
-          <p className="text-yellow-400 text-xs font-medium mb-1">🧪 Demo Credentials</p>
-          <p className="text-gray-400 text-xs">admin@cloudprint.io / admin123</p>
         </div>
       </div>
     </div>

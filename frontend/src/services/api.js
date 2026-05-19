@@ -64,11 +64,11 @@ export const jobsAPI = {
 // Printers API
 // ──────────────────────────────────────────────────────────────────────
 export const printersAPI = {
-  list:   ()        => api.get('/printers'),
-  get:    (id)      => api.get(`/printers/${id}`),
-  create: (data)    => api.post('/printers', data),
-  update: (id, data) => api.patch(`/printers/${id}`, data),
-  delete: (id)      => api.delete(`/printers/${id}`),
+  list:         ()          => api.get('/printers'),
+  get:          (id)        => api.get(`/printers/${id}`),
+  create:       (data)      => api.post('/printers', data),
+  update:       (id, data)  => api.patch(`/printers/${id}`, data),
+  delete:       (id)        => api.delete(`/printers/${id}`),
 };
 
 // ──────────────────────────────────────────────────────────────────────
