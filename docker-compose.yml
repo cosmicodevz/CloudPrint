@@ -1,0 +1,66 @@
+version: '3.9'
+
+services:
+  # ── MongoDB ──────────────────────────────────────────────────────────
+  mongodb:
+    image: mongo:7
+    container_name: cloudprint-mongo
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_DATABASE: cloudprint
+    volumes:
+      - mongo_data:/data/db
+    ports:
+      - "27017:27017"
+    networks:
+      - cloudprint-net
+
+  # ── Backend API ───────────────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: cloudprint-backend
+    restart: unless-stopped
+    depends_on:
+      - mongodb
+    environment:
+      NODE_ENV: production
+      PORT: 5000
+      MONGO_URI: mongodb://mongodb:27017/cloudprint
+      JWT_SECRET: ${JWT_SECRET:-changeme_in_production}
+      JWT_EXPIRES_IN: 7d
+      SERVER_URL: ${SERVER_URL:-http://localhost:5000}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
+      AGENT_SECRET: ${AGENT_SECRET:-changeme_agent_secret}
+    volumes:
+      - uploads_data:/app/uploads
+    ports:
+      - "5000:5000"
+    networks:
+      - cloudprint-net
+
+  # ── Frontend (Nginx) ──────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:5000/api}
+        VITE_SOCKET_URL: ${VITE_SOCKET_URL:-http://localhost:5000}
+    container_name: cloudprint-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+    networks:
+      - cloudprint-net
+
+volumes:
+  mongo_data:
+  uploads_data:
+
+networks:
+  cloudprint-net:
+    driver: bridge
