@@ -5,11 +5,11 @@ Edit these values to match your environment, or set env variables.
 import os
 
 # Backend server URL (no trailing slash)
-SERVER_URL   = os.getenv("SERVER_URL",   "http://localhost:5000")
-SOCKET_URL   = os.getenv("SOCKET_URL",   "http://localhost:5000")
+SERVER_URL   = os.getenv("SERVER_URL",   "https://cloudprint.onrender.com")
+SOCKET_URL   = os.getenv("SOCKET_URL",   "https://cloudprint.onrender.com")
 
 # Must match AGENT_SECRET in backend .env
-AGENT_SECRET = os.getenv("AGENT_SECRET", "your_agent_secret_change_this_in_production")
+AGENT_SECRET = os.getenv("AGENT_SECRET", "cosmicodevz@python#agent$secret")
 
 # Unique identifier for this agent — must match the agentId set in the printer record
 AGENT_ID     = os.getenv("AGENT_ID",     "agent-001")

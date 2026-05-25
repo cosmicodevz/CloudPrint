@@ -7,12 +7,14 @@ A background agent that runs near the WiFi printer, connects to
 the CloudPrint server via WebSocket, downloads new print jobs,
 sends them to the local printer, and updates status.
 
+This script runs as a System Tray application.
+
 Requirements:
-    pip install requests websocket-client pywin32
+    pip install requests websocket-client pywin32 pystray Pillow
     (Ghostscript installed for PDF printing on Windows)
 
 Usage:
-    python agent.py
+    pythonw agent.py
 """
 
 import os
@@ -28,7 +30,6 @@ from datetime import datetime
 
 import requests
 
-# Conditional pywin32 import (only on Windows)
 try:
     import win32print
     import win32api
@@ -44,6 +45,14 @@ except ImportError:
     WEBSOCKET_AVAILABLE = False
     logging.warning("websocket-client not installed — using HTTP polling only")
 
+try:
+    import pystray
+    from PIL import Image, ImageDraw
+    PYSTRAY_AVAILABLE = True
+except ImportError:
+    PYSTRAY_AVAILABLE = False
+    logging.warning("pystray or Pillow not installed. System tray icon will not be available.")
+
 # ─────────────────────────────────────────────────────────────────────
 # Configuration
 # ─────────────────────────────────────────────────────────────────────
@@ -52,13 +61,13 @@ from config import (
     PRINTER_NAME, POLL_INTERVAL, DOWNLOAD_DIR, LOG_LEVEL
 )
 
-# Force UTF-8 on stdout so emoji characters (✅ ❌) don't crash on
-# Windows consoles that default to cp1252 / other narrow encodings.
+# Force UTF-8 on stdout so emoji characters don't crash Windows consoles
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
+_log_file = "agent.log"
 _stream_handler = logging.StreamHandler(sys.stdout)
-_file_handler   = logging.FileHandler("agent.log", encoding="utf-8")
+_file_handler   = logging.FileHandler(_log_file, encoding="utf-8")
 
 logging.basicConfig(
     level=getattr(logging, LOG_LEVEL.upper(), logging.INFO),
@@ -70,6 +79,8 @@ logging.basicConfig(
 )
 log = logging.getLogger("PrintAgent")
 
+# Global event to signal all threads to shut down gracefully
+shutdown_flag = threading.Event()
 
 # ─────────────────────────────────────────────────────────────────────
 # HTTP Session with agent auth header
@@ -237,8 +248,12 @@ class JobProcessor:
         r.raise_for_status()
         with open(dest, "wb") as f:
             for chunk in r.iter_content(8192):
+                if shutdown_flag.is_set():
+                    log.warning("Shutdown flag set during download, aborting.")
+                    break
                 f.write(chunk)
-        log.info(f"Downloaded to: {dest}")
+        if not shutdown_flag.is_set():
+            log.info(f"Downloaded to: {dest}")
 
     @staticmethod
     def _update_status(job_id: str, status: str, error_msg: str = None):
@@ -263,12 +278,19 @@ class PollingAgent:
     def run(self):
         log.info(f"[Polling] Starting. Interval: {POLL_INTERVAL}s")
         self._heartbeat()
-        while True:
+        while not shutdown_flag.is_set():
             try:
                 self._poll()
             except Exception as e:
                 log.error(f"[Polling] Error: {e}")
-            time.sleep(POLL_INTERVAL)
+            
+            # Sleep in small increments to respond to shutdown flag quickly
+            for _ in range(POLL_INTERVAL):
+                if shutdown_flag.is_set():
+                    break
+                time.sleep(1)
+
+        log.info("[Polling] Stopped.")
 
     def _poll(self):
         url = f"{SERVER_URL}/api/printjobs/queue/pending"
@@ -276,17 +298,24 @@ class PollingAgent:
         if r.status_code == 200:
             jobs = r.json().get("jobs", [])
             for job in jobs:
+                if shutdown_flag.is_set():
+                    break
                 self.processor.process(job)
 
     def _heartbeat(self):
         def beat():
-            while True:
+            while not shutdown_flag.is_set():
                 try:
                     session.post(f"{SERVER_URL}/api/printers/agent/heartbeat",
                                  json={"agentId": AGENT_ID, "status": "online"}, timeout=5)
                 except Exception as e:
                     log.debug(f"Heartbeat failed: {e}")
-                time.sleep(30)
+                
+                # Sleep in small increments
+                for _ in range(30):
+                    if shutdown_flag.is_set():
+                        break
+                    time.sleep(1)
         threading.Thread(target=beat, daemon=True).start()
 
 
@@ -301,7 +330,7 @@ class WebSocketAgent:
 
     def run(self):
         log.info(f"[WebSocket] Connecting to {SOCKET_URL}")
-        while True:
+        while not shutdown_flag.is_set():
             try:
                 self.ws = websocket.WebSocketApp(
                     SOCKET_URL.replace("http", "ws") + "/socket.io/?EIO=4&transport=websocket",
@@ -311,11 +340,33 @@ class WebSocketAgent:
                     on_close=self._on_close,
                     header={"X-Agent-Secret": AGENT_SECRET},
                 )
+                
+                # We need a way to break ws.run_forever if shutdown occurs.
+                # We'll run it, but a background thread will monitor the flag and close ws.
+                monitor_thread = threading.Thread(target=self._monitor_shutdown, daemon=True)
+                monitor_thread.start()
+                
                 self.ws.run_forever(ping_interval=25, ping_timeout=10)
             except Exception as e:
                 log.error(f"[WebSocket] {e}")
+                
+            if shutdown_flag.is_set():
+                break
+
             log.info(f"[WebSocket] Reconnecting in {self._reconnect_delay}s...")
-            time.sleep(self._reconnect_delay)
+            for _ in range(self._reconnect_delay):
+                if shutdown_flag.is_set():
+                    break
+                time.sleep(1)
+        
+        log.info("[WebSocket] Stopped.")
+
+    def _monitor_shutdown(self):
+        """Monitors the shutdown flag and forces websocket close."""
+        while not shutdown_flag.is_set():
+            time.sleep(0.5)
+        if self.ws:
+            self.ws.close()
 
     def _on_open(self, ws):
         log.info("[WebSocket] Connected, waiting for Engine.IO handshake...")
@@ -351,6 +402,65 @@ class WebSocketAgent:
 
 
 # ─────────────────────────────────────────────────────────────────────
+# System Tray Application
+# ─────────────────────────────────────────────────────────────────────
+def create_image():
+    """Generates an in-memory icon for the system tray (a simple blue printer icon)."""
+    image = Image.new('RGB', (64, 64), color=(30, 30, 46))
+    dc = ImageDraw.Draw(image)
+    # Draw a stylized printer shape
+    dc.rectangle([16, 24, 48, 48], fill=(99, 102, 241))  # Body
+    dc.rectangle([22, 12, 42, 24], fill=(224, 231, 255)) # Paper top
+    dc.rectangle([20, 40, 44, 56], fill=(224, 231, 255)) # Paper bottom
+    # Screen/button
+    dc.rectangle([40, 28, 44, 32], fill=(49, 46, 129))
+    # Lines on paper
+    dc.line([24, 44, 40, 44], fill=(49, 46, 129), width=2)
+    dc.line([24, 48, 36, 48], fill=(49, 46, 129), width=2)
+    return image
+
+def on_open_logs(icon, item):
+    """Opens the agent.log file."""
+    try:
+        if sys.platform == "win32":
+            os.startfile(_log_file)
+        elif sys.platform == "darwin":
+            subprocess.call(["open", _log_file])
+        else:
+            subprocess.call(["xdg-open", _log_file])
+    except Exception as e:
+        log.error(f"Failed to open logs: {e}")
+
+def on_quit(icon, item):
+    """Signals all threads to shut down and stops the tray icon."""
+    log.info("Quit requested via System Tray...")
+    shutdown_flag.set()
+    icon.stop()
+
+def run_system_tray():
+    if not PYSTRAY_AVAILABLE:
+        log.warning("Running without system tray...")
+        try:
+            while not shutdown_flag.is_set():
+                time.sleep(1)
+        except KeyboardInterrupt:
+            shutdown_flag.set()
+        return
+
+    icon = pystray.Icon("CloudPrintAgent")
+    icon.menu = pystray.Menu(
+        pystray.MenuItem(f"Status: {PRINTER_NAME or 'Default Printer'}", lambda: None, enabled=False),
+        pystray.MenuItem("Open Logs", on_open_logs),
+        pystray.MenuItem("Quit", on_quit)
+    )
+    icon.icon = create_image()
+    icon.title = "CloudPrint Agent"
+    
+    # This call blocks until icon.stop() is called
+    icon.run()
+
+
+# ─────────────────────────────────────────────────────────────────────
 # Entry Point
 # ─────────────────────────────────────────────────────────────────────
 def main():
@@ -364,18 +474,27 @@ def main():
     printer   = PrinterManager(PRINTER_NAME)
     processor = JobProcessor(printer)
 
-    # Run WebSocket agent in main thread, polling as background fallback
+    # Start the workers in background threads
     polling = PollingAgent(processor)
     threading.Thread(target=polling.run, daemon=True).start()
 
     if WEBSOCKET_AVAILABLE:
         ws_agent = WebSocketAgent(processor)
-        ws_agent.run()  # Blocking
+        threading.Thread(target=ws_agent.run, daemon=True).start()
     else:
         log.info("WebSocket unavailable — running in polling-only mode")
-        polling_main = PollingAgent(processor)
-        polling_main.run()  # Blocking
 
+    try:
+        # Run the system tray icon on the main thread (blocks here)
+        run_system_tray()
+    except KeyboardInterrupt:
+        log.info("Ctrl+C detected, shutting down...")
+        shutdown_flag.set()
+
+    # Wait briefly for threads to close out
+    log.info("Waiting for background tasks to clean up...")
+    time.sleep(1)
+    log.info("Agent shut down successfully.")
 
 if __name__ == "__main__":
     main()
